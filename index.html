@@ -1,0 +1,402 @@
+<!DOCTYPE HTML>
+<!--[if IE 6]>
+<html id="ie6" lang="en-US" class="ie ie6 lt-ie9">
+<![endif]-->
+<!--[if IE 7]>
+<html id="ie7" lang="en-US" class="ie ie7 lt-ie9">
+<![endif]-->
+<!--[if IE 8]>
+<html id="ie8" lang="en-US" class="ie ie8 lt-ie9">
+<![endif]-->
+<!--[if gte IE 9]>
+<html lang="en-US" class="ie ie9">
+<![endif]-->
+<!--[if !(IE)]><!-->
+<html lang="en-US" class="">
+<!--<![endif]-->
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="initial-scale=1.0">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="author" content="sidneyshek">
+
+	<title>Learning Scala as a Java/Spring-a-holic</title>
+	<link rel="stylesheet" href="assets/css/reset.css">
+	<link rel="stylesheet" href="css/flowtime.css">
+	<link rel="stylesheet" href="css/themes/default.css">
+	<link rel="stylesheet" href="assets/css/prism.css">
+	<link type="text/css" rel="stylesheet" href="assets/css/sh_emacs.min.css">
+	
+	
+	<link rel="apple-touch-icon-precomposed" 						href="img/touch-icon-iphone.png">
+	<link rel="apple-touch-icon-precomposed" 	sizes="72x72" 		href="img/touch-icon-ipad.png">
+	<link rel="apple-touch-icon-precomposed" 	sizes="114x114" 	href="img/touch-icon-iphone-retina.png">
+	<link rel="apple-touch-icon-precomposed" 	sizes="144x144" 	href="img/touch-icon-ipad-retina.png">
+	
+	<link rel="apple-touch-startup-image" href="img/startup-640x920.png" media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)">
+	<link rel="apple-touch-startup-image" href="img/startup-640x1096.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+	<style media="screen" type="text/css">
+/* <!-- */
+body {
+	margin:0;
+	padding:0;
+}
+#header h1,
+#header h2,
+#header p {
+	margin-left:2%;
+	padding-right:2%;
+}
+#active2 #tab2,
+#active3 #tab3,
+#active4 #tab4,
+#active5 #tab5 {
+	font-weight:bold;
+	text-decoration:none;
+	color:#000;
+}
+#footer {
+	clear:both;
+	float:left;
+	width:100%;
+}
+#footer p {
+	margin-left:2%;
+	padding-right:2%;
+}
+
+/* Start of Column CSS */
+#container2 {
+	clear:left;
+	float:left;
+	width:100%;
+	overflow:hidden;
+}
+.content-wrapper {
+	float:left;
+	width:100%;
+	position:relative;
+	right:50%;
+}
+.content-wrapper .col1 {
+	float:left;
+	width:46%;
+	position:relative;
+	left:52%;
+	overflow:hidden;
+}
+.content-wrapper .col2 {
+	float:left;
+	width:46%;
+	position:relative;
+	left:56%;
+	overflow:hidden;
+}
+/* --> */
+	</style>
+</head>
+<body class="" onload="sh_highlightDocument();">
+	
+	<div class="flowtime">
+		<div class="ft-section" data-id="section-1">
+			<div id="/section-1/page-1" class="ft-page" data-id="page-1" data-title="Learning Scala as a Java/Spring-a-holic by @sidneyshek">
+				<div class="stack-center">
+					<div class="stacked-center">
+						<p class="page-title"><h2>Learning Scala as a Java/Spring-a-holic</h2></p>
+						<p><h4>or Learning to write clean and simple code with no magic!</h4></p>
+						<p><span class="small"><a href="https://twitter.com/sidneyshek" target="_blank">@sidneyshek</a></span></p>
+					</div>
+				</div>
+			</div>
+			<div id="/section-1/page-2" class="ft-page" data-id="page-2">
+				<h1>Tonight's discussions</h1>
+				<ol>
+					<li>Learning the fundamentals</li>
+					<li>Applying it to an app</li>
+					<li>Odds and ends</li>
+				</ol>
+			</div>
+		</div>
+		<div class="ft-section" data-id="section-2">
+			<div id="/section-2/page-1" class="ft-page" data-id="page-1">
+				<div class="stack-center">
+					<div class="stacked-center">
+						<p class="page-title"><h1>Learning the fundamentals</h1></p>
+					</div>
+				</div>
+			</div>
+			<div id="/section-2/page-2" class="ft-page" data-id="page-2">
+				<h1>Types everywhere</h1>
+				<p>Types for data, functions and 'state machine' state</p>
+				<p>"Compile" test gives us confidence</p>
+				<p>Algebraic Data Types:
+					<ul>
+						<li>Allow pattern matching to simplify problems</li>
+						<li>Can wrap error states for 'inline' error handling</p>
+					</ul>
+				</p>
+				<pre><code class="language-markup">
+sealed trait HttpResult[+A]
+
+case class HttpError[A](...) extends HttpResult[A]
+case class HttpDone[A](...) extends HttpResult[A]
+case class HttpCont[A](...) extends HttpResult[A]
+</code></pre>
+			</div>
+			<div id="/section-2/page-3" class="ft-page" data-id="page-3">
+				<h1>Type classes over inheritance</h1>
+				<div class="content-wrapper">
+					<div class="col1">
+						<pre><code class="language-markup">
+trait Keyed {
+  def get: Option[Uid]
+  def set(key: Uid): Keyed
+}
+
+case class MyEntity(key: Uid) extends Keyed {
+  def get = ...
+  def set = ...
+}
+
+case class MySecondEntity extends Keyed ...
+</code></pre>
+						<p>More code initially but fewer changes when extending type class</p>
+						<p>Helps with expression problem, framework problem, ...</p>
+					</div>
+					<div class="col2">
+						<pre><code class="language-markup">
+trait Keyed[A] {
+  def get(a: A): Option[Uid]
+  def set(key: Uid, a: A): A
+}
+object Keyed {
+  def apply[A](f: A => Option[Uid], 
+    g: (Uid, A) => A) = new Keyed[A] {
+      def get(a: A) = f(a)
+      def set(key: Uid, a: A) = g(key, a)
+  }
+}
+
+case class MyEntity(key: Uid, ...)
+
+object MyEntity {
+  implicit def MyEntityToKeyed: Keyed[MyEntity] = 
+    Keyed(m => Some(m.key), 
+      (key, m) => m.copy(key = key))
+}</code></pre>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="ft-section" data-id="section-3">
+			<div id="/section-3/page-1" class="ft-page" data-id="page-1">
+				<div class="stack-center">
+					<div class="stacked-center">
+						<p class="page-title"><h1>Applying it to an app</h1></p>
+					</div>
+				</div>
+			</div>
+			<div id="/section-3/page-2" class="ft-page" data-id="page-2">
+				<h1>Architecture...stays the same</h1>
+				<div class="stack">
+					<div class="ft-fragment stacked shy"><img src="slide-images/architecture-1.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/architecture-2.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/architecture-3.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/architecture-4.png"></div>
+					<div class="ft-fragment stacked">
+						<p>Focus on the small well-defined pieces</p>
+						<p>Immutability and types give well-defined interfaces between components</p>
+					</div>
+				</div>
+			</div>
+			<div id="/section-3/page-3" class="ft-page" data-id="page-3">
+				<h1>Monads for wrapping functions</h1>
+				<p>Practically speaking, define:
+					<ul>
+						<li><strong>map</strong> and <strong>flatMap</strong></li>
+						<li><strong>lift</strong> to wrap/convert function into upper layer</li>
+						<li><strong>point</strong> and <strong>bind</strong> to use Scalaz's functions</li>
+					</ul>
+				</p>
+<pre><code class="language-markup">
+case class Db[A] (run: Connection => DbValue[A]) {
+  def map[B] (f: A => B): Db[B] = Db(i => run(i).map(f))
+
+  def flatMap[B] (f: A => Db[B]): Db[B] = 
+    Db(i => run(i).flatMap(a => f(a).run(i)))
+
+  def lift: Service[A] = ???
+}
+</code></pre>
+			</div>
+			<div id="/section-3/page-4" class="ft-page" data-id="page-4">
+				<h1>Gluing two layers together</h1>
+				<div class="content-wrapper">
+					<div class="col1">
+<pre><code class="language-markup">
+object PersonDb {
+  // FIX - maybe tagged types for Id?
+  def byId(param: Uid): Db[Person] = 
+    Db(c => c.query(param))
+}
+
+object ItemDb {
+  def byId(id: Uid): Db[Item] = ???
+}
+</code></pre>
+					</div>
+					<div class="col2">
+<pre><code class="language-markup">
+object FancyEntityService {
+  def getApproverItems(personId: Uid): 
+    Service[List[Item]] =
+      (for {
+         person <- PersonDb.byId(personId)
+         approver <- PersonDb.byId(
+           person.approverId)
+         items <- approver.itemIds.traverse(
+           ItemDb.byId(_))
+       } yield items).lift
+  
+  def getApproverItemsLength(personId: Uid): 
+    Service[Int]] =
+    PersonDb.byId(personId).flatMap(
+      p => PersonDb.byId(p.approverId)).flatMap(
+        approver => approver.itemIds.traverse(
+          ItemDb.byId(_))).map(
+            items => items.length).lift
+}
+</code></pre>
+					</div>
+				</div>
+			</div>
+			<div id="/section-3/page-5" class="ft-page" data-id="page-5">
+				<h1>What the...no DI?</h1>
+				<p><strong>Testability of components</strong> - by writing small well-defined functions</p>
+				<p><strong>Cross-cutting concerns</strong> - via higher-order functions at upper layers</p>
+				<p><strong>Configurability</strong> - by Reader monads</p>
+			</div>
+		</div>
+
+		<div class="ft-section" data-id="section-4">
+			<div id="/section-4/page-1" class="ft-page" data-id="page-1">
+				<div class="stack-center">
+					<div class="stacked-center">
+						<p class="page-title"><h1>Odds and ends</h1></p>
+					</div>
+				</div>
+			</div>
+
+			<div id="/section-4/page-2" class="ft-page" data-id="page-2">
+				<h1>Scalaz is wonderful</h1>
+				<p>Really useful functions: <strong>sequence</strong>, <strong>traverse</strong></p>
+				<p>Useful types: <strong>Monad</strong>, <strong>EitherT</strong>, <strong>Validation</strong>, <strong>NonEmptyList</strong>, <strong>Zipper</strong></p>
+				<p>Check out types in <strong>scalaz(.std)</strong> package, functions in <strong>scalaz.syntax(.std).XXXOps</strong> </p>
+				<p>Learn a bit of Haskell (e.g. http://learnyouahaskell.com/)</p>
+				<p>Start importing all implicits (Scalaz._), then optimise to specific objects in scalaz.syntax package!</p>
+			</div>
+			<div id="/section-4/page-3" class="ft-page" data-id="page-3">
+				<h1>Scalacheck is cool</h1>
+				<p><strong>Test data generation</strong> - No more hard coded data sets!</p>
+				<p><strong>Find edge-case bugs</strong> - Write tests/specs that run over many data sets</p>
+			</div>
+			<div id="/section-4/page-4" class="ft-page" data-id="page-4">
+				<h1>SBT with multiple test configurations</h1>
+				<p>Separate functional, integration, unit tests (src/func, src/it, src/test)</p>
+				<pre><code class="language-markup">
+object B extends Build
+{
+  lazy val CustomIntegrationTest = config("it") extend(Test)
+  lazy val root = Project("root", file("."))
+      .configs( CustomIntegrationTest )
+      .settings( inConfig(CustomIntegrationTest)(Defaults.testSettings) : _*)
+      .settings(
+      testGrouping in CustomIntegrationTest <<= definedTests in 
+        CustomIntegrationTest map partitionTests("integrationTests"),
+      testGrouping in Test <<= definedTests in 
+        Test map partitionTests("unitTests"),
+      parallelExecution in CustomIntegrationTest := false
+    )
+
+  def partitionTests(groupName: String)(tests: Seq[TestDefinition]) = {
+    Seq(
+      new Group(groupName, tests, SubProcess(Seq()))
+    )
+  }
+}
+</code></pre>
+			</div>
+		</div>
+
+		<div class="ft-section" data-id="section-5">
+			<div id="/section-5/page-1" class="ft-page" data-id="page-1">
+				<h1>Summary</h1>
+				<ul>
+					<li>Think types and pattern matching</li>
+					<li>Think small</li>
+					<li>Think functional!</li>
+				</ul>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="loglog"></div>
+
+	<script src="js/brav1toolbox.js"></script>
+	<script src="js/flowtime.js"></script>
+	<script src="assets/js/prism.js"></script>
+        <script src="assets/js/sh_main.min.js"></script>
+        <script src="assets/js/sh_scala.min.js"></script>
+
+	<script type="text/javascript">
+		var cacheTitle = document.title.replace("Flowtime.js | ", "");
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-1228618-10']);
+		_gaq.push(['_trackPageview']);
+		_gaq.push(['_trackEvent', 'Flowtime', 'Landing', document.title]);
+		(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+		
+		// Configuration API test
+		Flowtime.showProgress(true);
+		// Flowtime.fragmentsOnSide(true);
+		// Flowtime.fragmentsOnBack(true);
+		// Flowtime.useHistory(false);
+		// Flowtime.slideInPx(true);
+		// Flowtime.sectionsSlideToTop(true);
+		// Flowtime.gridNavigation(false);
+		// Flowtime.useOverviewVariant(true);
+		Flowtime.parallaxInPx(true);
+		//
+		// event management
+		Flowtime.addEventListener("flowtimenavigation", onNavigation, false);
+		function onNavigation(e)
+		{
+			_gaq.push(['_trackEvent', 'Flowtime', 'Navigation', cacheTitle + ' > ' + document.title.replace("Flowtime.js | ", "")]);
+			// console.log(cacheTitle + ' > ' + document.title.replace("Flowtime.js | ", ""));
+			cacheTitle = document.title.replace("Flowtime.js | ", "");
+			//console.log('section', e.section, 'sectionIndex', e.sectionIndex);
+			//console.log('page', e.page, 'pageIndex', e.);
+			//console.log('pastSectionIndex', e.pastSectionIndex, 'pastPageIndex', e.pastPageIndex);
+			//console.log('prevSection', e.prevSection);
+			//console.log('nextSection', e.nextSection);
+			//console.log('prevPage', e.prevPage);
+			//console.log('nextPage', e.nextPage);
+			//console.log('fragment', e.fragment, + 'fragmentIndex', e.fragmentIndex);
+			//console.log("isOverview", e.isOverview);
+			//console.log('progress:', e.progress, 'total:', e.total);
+			// var value = Math.round(e.progress * 100 / e.total);
+			// console.log('Completion: ' + value + '%');
+		}
+		// starts the application with configuration options
+		Flowtime.start();
+	</script>
+	<script type="text/javascript" src="http://slidemote.jit.su/slidemote.js#flowtime"></script>
+</body>
+</html>
+
