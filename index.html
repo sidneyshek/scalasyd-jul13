@@ -103,7 +103,7 @@ body {
 				<div class="stack-center">
 					<div class="stacked-center">
 						<p class="page-title"><h2>Learning Scala as a Java/Spring-a-holic</h2></p>
-						<p><h4>or Learning to write clean and simple code with no magic!</h4></p>
+						<p><h3>or Learning to write clean and simple code with no magic!</h3></p>
 						<p><span class="small"><a href="https://twitter.com/sidneyshek" target="_blank">@sidneyshek</a></span></p>
 					</div>
 				</div>
@@ -135,8 +135,7 @@ body {
 						<li>Can wrap error states for 'inline' error handling</p>
 					</ul>
 				</p>
-				<pre><code class="language-markup">
-sealed trait HttpResult[+A]
+				<pre><code class="language-markup">sealed trait HttpResult[+A]
 
 case class HttpError[A](...) extends HttpResult[A]
 case class HttpDone[A](...) extends HttpResult[A]
@@ -145,10 +144,21 @@ case class HttpCont[A](...) extends HttpResult[A]
 			</div>
 			<div id="/section-2/page-3" class="ft-page" data-id="page-3">
 				<h1>Type classes over inheritance</h1>
+				<div class="stack">
+					<div class="ft-fragment stacked shy"><img src="slide-images/inheritance-1.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/inheritance-2.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/inheritance-3.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/inheritance-4.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/typeclass-1.png"></div>
+					<div class="ft-fragment stacked shy"><img src="slide-images/typeclass-4.png"></div>
+				</div>
+			</div>
+
+			<div id="/section-2/page-4" class="ft-page" data-id="page-4">
+				<h1>Type classes over inheritance</h1>
 				<div class="content-wrapper">
 					<div class="col1">
-						<pre><code class="language-markup">
-trait Keyed {
+						<pre><code class="language-markup">trait Keyed {
   def get: Option[Uid]
   def set(key: Uid): Keyed
 }
@@ -164,11 +174,11 @@ case class MySecondEntity extends Keyed ...
 						<p>Helps with expression problem, framework problem, ...</p>
 					</div>
 					<div class="col2">
-						<pre><code class="language-markup">
-trait Keyed[A] {
+						<pre><code class="language-markup">trait Keyed[A] {
   def get(a: A): Option[Uid]
   def set(key: Uid, a: A): A
 }
+
 object Keyed {
   def apply[A](f: A => Option[Uid], 
     g: (Uid, A) => A) = new Keyed[A] {
@@ -180,10 +190,18 @@ object Keyed {
 case class MyEntity(key: Uid, ...)
 
 object MyEntity {
-  implicit def MyEntityToKeyed: Keyed[MyEntity] = 
-    Keyed(m => Some(m.key), 
-      (key, m) => m.copy(key = key))
-}</code></pre>
+  implicit def MyEntityToKeyed: 
+    Keyed[MyEntity] = 
+      Keyed(m => Some(m.key), 
+        (key, m) => m.copy(key = key))
+}
+
+def func1[A: Keyed](a: A): String = ???
+
+def func1[A](a: A)(implicit ev: Keyed[A]):
+  String = ???
+
+</code></pre>
 					</div>
 				</div>
 			</div>
@@ -211,15 +229,8 @@ object MyEntity {
 				</div>
 			</div>
 			<div id="/section-3/page-3" class="ft-page" data-id="page-3">
-				<h1>Monads for wrapping functions</h1>
-				<p>Practically speaking, define:
-					<ul>
-						<li><strong>map</strong> and <strong>flatMap</strong></li>
-						<li><strong>lift</strong> to wrap/convert function into upper layer</li>
-						<li><strong>point</strong> and <strong>bind</strong> to use Scalaz's functions</li>
-					</ul>
-				</p>
-<pre><code class="language-markup">
+				<h1>Starting at the database</h1>
+<pre><code class="language-markup">// A database function
 case class Db[A] (run: Connection => DbValue[A]) {
   def map[B] (f: A => B): Db[B] = Db(i => run(i).map(f))
 
@@ -228,6 +239,17 @@ case class Db[A] (run: Connection => DbValue[A]) {
 
   def lift: Service[A] = ???
 }
+
+// A 'data access object'
+object PersonDb {
+  def byId(param: Uid): Db[Person] = 
+    Db(c => c.query(param))
+}
+
+// Return value may be a success or a failure
+sealed trait DbValue[A]
+case class DbSuccess[A](a: A) extends DbValue[A]
+case class DbFailure[A](error: Exception) extends DbValue[A]
 </code></pre>
 			</div>
 			<div id="/section-3/page-4" class="ft-page" data-id="page-4">
@@ -236,36 +258,33 @@ case class Db[A] (run: Connection => DbValue[A]) {
 					<div class="col1">
 <pre><code class="language-markup">
 object PersonDb {
-  // FIX - maybe tagged types for Id?
   def byId(param: Uid): Db[Person] = 
     Db(c => c.query(param))
 }
 
 object ItemDb {
-  def byId(id: Uid): Db[Item] = ???
+  def byIds(id: List[Uid]): Db[List[Item]] = ???
 }
 </code></pre>
 					</div>
 					<div class="col2">
 <pre><code class="language-markup">
 object FancyEntityService {
-  def getApproverItems(personId: Uid): 
-    Service[List[Item]] =
-      (for {
-         person <- PersonDb.byId(personId)
-         approver <- PersonDb.byId(
-           person.approverId)
-         items <- approver.itemIds.traverse(
-           ItemDb.byId(_))
-       } yield items).lift
-  
   def getApproverItemsLength(personId: Uid): 
     Service[Int]] =
     PersonDb.byId(personId).flatMap(
       p => PersonDb.byId(p.approverId)).flatMap(
-        approver => approver.itemIds.traverse(
-          ItemDb.byId(_))).map(
+        a => ItemDb.byIds(a.items))).map(
             items => items.length).lift
+
+  def getApproverItemsLength2(personId: Uid): 
+    Service[Int] =
+      (for {
+         person <- PersonDb.byId(personId)
+         approver <- PersonDb.byId(
+           person.approverId)
+         items <- ItemDb.byIds(approver.items)
+       } yield items.length).lift
 }
 </code></pre>
 					</div>
@@ -277,6 +296,94 @@ object FancyEntityService {
 				<p><strong>Cross-cutting concerns</strong> - via higher-order functions at upper layers</p>
 				<p><strong>Configurability</strong> - by Reader monads</p>
 			</div>
+			<div id="/section-3/page-6" class="ft-page" data-id="page-6">
+				<h1>Example cross-cutting concern</h1>
+<pre><code class="language-markup">// My controller defines routes and transaction management
+class MyApi(config: Config) extends unfiltered.filter.Plan {
+...
+
+req match {
+  // For a request at /profile/{id}, call PersonService.byId within a transaction
+  case GET(Path(Seg("profile" :: id :: Nil))) => 
+    transaction { PersonService.byId(id) }
+
+  ... other routes ...
+}
+
+// Transaction function wraps a 'service function' in a transaction
+def transaction[A](service: Service[A]) = {
+  val connection = createConnection(config.connStr)
+  try {
+    val r = service.run(connection)
+    connection.commit
+    r
+  } catch {
+    case (e: Throwable) => { connection.rollback; throw e }
+  } finally connection.close
+}
+
+}
+</code></pre>
+			</div>
+			<div id="/section-3/page-7" class="ft-page" data-id="page-7">
+				<h1>Configuration via reader monad</h1>
+				<div class="content-wrapper">
+					<div class="col1">
+<pre><code class="language-markup">// Provide come configurable DB connectors
+case class Config(conn: Connection, ...)
+
+// Remember the database function?
+case class Db[A] 
+  (dbFunc: Connection => DbValue[A]) {
+  ...map and flatMap...
+
+  // Lift creates a Service function that:
+  // 1) pulls the connection out of the config
+  // 2) runs the database function
+  def lift: Service[A] = 
+    Service(config => dbFunc(config.conn))
+}
+
+object PersonDb { 
+  def byId(identity: Uid): Db[Person] = ...
+}
+
+case class Service[A] 
+  (serviceFunc: Config => DbValue[A]) {
+    ...map and flatMap... }
+
+object PersonService {
+  def byId(identity: Uid): Service[Team] = 
+    PersonDb.byId(identity).lift
+}
+
+</code></pre>
+					</div>
+					<div class="col2">
+<pre><code class="language-markup">class MyApi(config: Config) {
+  ... routes ...
+  def transaction[A](s: Service[A]) = {
+    ...
+    // Run the service with the config
+    // This ends up running the database
+    // function with the connection
+    s.serviceFunc(config)
+    ...
+  }
+}
+
+object Main {
+  def main(...) {
+    // Create the config right at the top and
+    // pass it down
+    new MyApi(Config(
+      new RealDbConnection())).run()
+  }
+}
+</code></pre>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<div class="ft-section" data-id="section-4">
@@ -287,21 +394,94 @@ object FancyEntityService {
 					</div>
 				</div>
 			</div>
-
 			<div id="/section-4/page-2" class="ft-page" data-id="page-2">
+				<h1>Scalaz is wonderful</h1>
+<pre>
+case class Person(identity: Uid, teams: List[Uid], ...)
+
+object PersonDb {
+  def byId(identity: Uid): Db[Person]
+}
+
+object TeamDb {
+  def byId(identity: Uid): Db[Team]
+}
+<pre>
+object PersonService {
+  def teamsForPerson(identity: Uid): Service[List[Team]] = 
+    (for {
+<span class="ft-fragment">      person <- PersonDb.byId(identity)   // person is a Person</span>
+<span class="ft-fragment">      teamIds = person.teams              // teamIds is a List[Uid] for teams</span>
+<span class="ft-fragment shy">      teams <- ???                        // teams should be List[Team]
+               // teamIds.map(TeamDb.byId(_)) gives List[Db[Team]], but I want Db[List[Team]]</span>
+<span class="ft-fragment">      teams <- teamIds.traverse(TeamDb.byId(_)) </span>
+    } yield teams).lift
+}
+</pre>
+			</div>
+			<div id="/section-4/page-3" class="ft-page" data-id="page-3">
 				<h1>Scalaz is wonderful</h1>
 				<p>Really useful functions: <strong>sequence</strong>, <strong>traverse</strong></p>
 				<p>Useful types: <strong>Monad</strong>, <strong>EitherT</strong>, <strong>Validation</strong>, <strong>NonEmptyList</strong>, <strong>Zipper</strong></p>
+				<p>Use autocomplete by importing all types (scalaz._) and implicits (Scalaz._)<br/>...then optimise to specific implicits in scalaz.syntax package!</p>
 				<p>Check out types in <strong>scalaz(.std)</strong> package, functions in <strong>scalaz.syntax(.std).XXXOps</strong> </p>
 				<p>Learn a bit of Haskell (e.g. http://learnyouahaskell.com/)</p>
-				<p>Start importing all implicits (Scalaz._), then optimise to specific objects in scalaz.syntax package!</p>
 			</div>
-			<div id="/section-4/page-3" class="ft-page" data-id="page-3">
+			<div id="/section-4/page-4" class="ft-page" data-id="page-4">
 				<h1>Scalacheck is cool</h1>
 				<p><strong>Test data generation</strong> - No more hard coded data sets!</p>
 				<p><strong>Find edge-case bugs</strong> - Write tests/specs that run over many data sets</p>
 			</div>
-			<div id="/section-4/page-4" class="ft-page" data-id="page-4">
+			<div id="/section-4/page-5" class="ft-page" data-id="page-5">
+				<h1>Specs2/Scalacheck Example</h1>
+<pre><code class="language-markup">
+import org.specs2.{mutable, ScalaCheck}, mutable._
+
+class PersonServiceSpec extends Specification 
+  with ScalaCheck with SecurityArbitraries {
+
+  "PersonService" should {
+
+    "return person by login" ! prop((person: Person) => {
+
+      (for {
+        savedPerson <- PersonService.save(person)
+        retrieved <- PersonService.byName(person.login)
+      } yield (savedPerson, retrieved)) must returnIs(r => {
+        val (savedPerson, retrieved) = r
+        retrieved == Some(savedPerson)
+      })
+
+    })
+  }
+}
+</code></pre>
+			</div>
+			<div id="/section-4/page-6" class="ft-page" data-id="page-6">
+				<h1>Generating random test data</h1>
+<pre><code class="language-markup">
+trait SecurityArbitraries extends BasicTypeArbitraries {
+  implicit def PersonArbitrary: Arbitrary[Person] =
+    Arbitrary(for {
+      login <- Gen.identifier
+      name <- arbitrary[String]
+      joinDate <- arbitrary[DateTime]
+      password <- Gen.identifier
+      teams <- genLimitedList[String](0, 20)
+    } yield Person(login, name, joinDate, password, teams.distinct))
+}
+
+trait BasicTypeArbitraries {
+  def genLimitedList[A: Arbitrary](min: Int = 0, max: Int = 20) =
+    for {
+      num <- Gen.choose(min, max)
+      list <- Gen.listOfN(num, arbitrary[A])
+    } yield list
+}
+
+</code></pre>
+			</div>
+			<div id="/section-4/page-7" class="ft-page" data-id="page-7">
 				<h1>SBT with multiple test configurations</h1>
 				<p>Separate functional, integration, unit tests (src/func, src/it, src/test)</p>
 				<pre><code class="language-markup">
