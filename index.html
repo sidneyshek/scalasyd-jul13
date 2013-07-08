@@ -263,7 +263,8 @@ object PersonDb {
 }
 
 object ItemDb {
-  def byIds(id: List[Uid]): Db[List[Item]] = ???
+  def byIds(id: List[Uid]): Db[List[Item]] = 
+    ???
 }
 </code></pre>
 					</div>
@@ -273,7 +274,7 @@ object FancyEntityService {
   def getApproverItemsLength(personId: Uid): 
     Service[Int]] =
     PersonDb.byId(personId).flatMap(
-      p => PersonDb.byId(p.approverId)).flatMap(
+      p => PersonDb.byId(p.approver)).flatMap(
         a => ItemDb.byIds(a.items))).map(
             items => items.length).lift
 
