@@ -230,7 +230,12 @@ def func1[A](a: A)(implicit ev: Keyed[A]):
 			</div>
 			<div id="/section-3/page-3" class="ft-page" data-id="page-3">
 				<h1>Starting at the database</h1>
-<pre><code class="language-markup">// A database function
+<pre><code class="language-markup">// DbValue wraps value from database and possible exceptions
+sealed trait DbValue[A]
+case class DbSuccess[A](a: A) extends DbValue[A]
+case class DbFailure[A](error: Exception) extends DbValue[A]
+
+// A database function uses a DB connection to get a value from the database
 case class Db[A] (run: Connection => DbValue[A]) {
   def map[B] (f: A => B): Db[B] = Db(i => run(i).map(f))
 
@@ -246,10 +251,6 @@ object PersonDb {
     Db(c => c.query(param))
 }
 
-// Return value may be a success or a failure
-sealed trait DbValue[A]
-case class DbSuccess[A](a: A) extends DbValue[A]
-case class DbFailure[A](error: Exception) extends DbValue[A]
 </code></pre>
 			</div>
 			<div id="/section-3/page-4" class="ft-page" data-id="page-4">
@@ -272,7 +273,7 @@ object ItemDb {
 <pre><code class="language-markup">
 object FancyEntityService {
   def getApproverItemsLength(personId: Uid): 
-    Service[Int]] =
+    Service[Int] =
     PersonDb.byId(personId).flatMap(
       p => PersonDb.byId(p.approver)).flatMap(
         a => ItemDb.byIds(a.items))).map(
@@ -295,7 +296,7 @@ object FancyEntityService {
 				<h1>What the...no DI?</h1>
 				<p><strong>Testability of components</strong> - by writing small well-defined functions</p>
 				<p><strong>Cross-cutting concerns</strong> - via higher-order functions at upper layers</p>
-				<p><strong>Configurability</strong> - by Reader monads</p>
+				<p><strong>Configurability</strong> - by 'readers'</p>
 			</div>
 			<div id="/section-3/page-6" class="ft-page" data-id="page-6">
 				<h1>Example cross-cutting concern</h1>
@@ -327,7 +328,7 @@ def transaction[A](service: Service[A]) = {
 </code></pre>
 			</div>
 			<div id="/section-3/page-7" class="ft-page" data-id="page-7">
-				<h1>Configuration via reader monad</h1>
+				<h1>Configuration via readers</h1>
 				<div class="content-wrapper">
 					<div class="col1">
 <pre><code class="language-markup">// Provide come configurable DB connectors
@@ -335,14 +336,14 @@ case class Config(conn: Connection, ...)
 
 // Remember the database function?
 case class Db[A] 
-  (dbFunc: Connection => DbValue[A]) {
+  (run: Connection => DbValue[A]) {
   ...map and flatMap...
 
   // Lift creates a Service function that:
   // 1) pulls the connection out of the config
   // 2) runs the database function
   def lift: Service[A] = 
-    Service(config => dbFunc(config.conn))
+    Service(config => run(config.conn))
 }
 
 object PersonDb { 
@@ -350,7 +351,7 @@ object PersonDb {
 }
 
 case class Service[A] 
-  (serviceFunc: Config => DbValue[A]) {
+  (run: Config => DbValue[A]) {
     ...map and flatMap... }
 
 object PersonService {
@@ -368,7 +369,7 @@ object PersonService {
     // Run the service with the config
     // This ends up running the database
     // function with the connection
-    s.serviceFunc(config)
+    s.run(config)
     ...
   }
 }
